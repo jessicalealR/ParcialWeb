@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Empleados</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</head>
+
+<body>
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Registro de Empleados</h2>
+    <form id="employeeForm">
+
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Apellidos</label>
+            <input type="text" class="form-control" id="lastName" pattern="[A-Za-z ]+" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="firstName" class="form-label">Nombres</label>
+            <input type="text" class="form-control" id="firstName" pattern="[A-Za-z ]+" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="department" class="form-label">Departamento</label>
+            <select class="form-select" id="department" onchange="loadTowns(this.value)" required>
+                <option value="">Seleccione Departamento...</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="town" class="form-label">Municipio</label>
+            <select class="form-select" id="town" required>
+                <option value="">Seleccione Municipio...</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="birthday" class="form-label">Fecha de Nacimiento</label>
+            <input type="date" class="form-control" id="birthday" required max="9999-12-31">
+        </div>
+
+        <div class="mb-3">
+            <label for="salary" class="form-label">Salario</label>
+            <input type="number" class="form-control" id="salary" required>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="addEmployee()">Agregar Empleado</button>
+    </form>
+
+    <hr>
+
+    <h3 class="text-center mb-4">Lista de Empleados</h3>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Apellidos y Nombres</th>
+            <th>Ciudad</th>
+            <th>Edad</th>
+        </tr>
+        </thead>
+        <tbody id="employeeTableBody">
+        </tbody>
+    </table>
+
+    <div class="mb-3">
+        <label for="searchId" class="form-label">Buscar empleado por ID:</label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="searchId" required>
+            <button type="button" class="btn btn-info" onclick="searchEmployee()">Buscar</button>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="departments.json"></script>
+<script src="towns.json"></script>
+<script>
+    var employees = [];
+    var idCounter = 1;
+
+    $(document).ready(function () {
+        loadDepartments();
+    });
+
+    function loadDepartments() {
+        var departmentSelect = $("#department");
+        departmentSelect.empty();
+        departmentSelect.append("<option value=''>Seleccione Departamento</option>");
+
+
+        $.getJSON("departments.json", function (data) {
+            departments = data;
+
+            for (var i = 0; i < departments.length; i++) {
+                departmentSelect.append("<option value='" + departments[i].id + "'>" + departments[i].nombre + "</option>");
+            }
+        });
+    }
+
+    function loadTowns(departmentId) {
+        var townSelect = $("#town");
+        townSelect.empty();
+        townSelect.append("<option value=''>Seleccione Municipio</option>");
+
+        $.getJSON("towns.json", function (data) {
+            towns = data;
+
+            var departmentTowns = towns[departmentId] || [];
+            for (var i = 0; i < departmentTowns.length; i++) {
+                townSelect.append("<option>" + departmentTowns[i] + "</option>");
+            }
+        });
+    }
+
+    function addEmployee() {
+        var lastName = $("#lastName").val();
+        var firstName = $("#firstName").val();
+        var department = $("#department").val();
+        var town = $("#town").val();
+        var birthday = $("#birthday").val();
+        var salary = $("#salary").val();
+
+        var id = idCounter++;
+
+        var employee = {
+            id: id,
+            lastName: lastName,
+            firstName: firstName,
+            department: department,
+            town: town,
+            birthday: birthday,
+            salary: salary
+        };
+
+        employees.push(employee);
+        displayEmployee(employee);
+    }
+
+    function displayEmployee(employee) {
+        var birthDate = new Date(employee.birthday);
+        var currentDate = new Date();
+
+        var age = currentDate.getFullYear() - birthDate.getFullYear();
+
+        if (currentDate.getMonth() < birthDate.getMonth() ||
+            (currentDate.getMonth() === birthDate.getMonth() && currentDate.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        var row = "<tr><td>" + employee.id + "</td><td>" + employee.lastName + ", " + employee.firstName + "</td><td>" + employee.town + "</td><td>" + age + "</td></tr>";
+        $("#employeeTableBody").append(row);
+    }
+
+    function searchEmployee() {
+        var searchId = $("#searchId").val();
+        var employee = employees.find(emp => emp.id == searchId);
+
+        if (employee) {
+            alert("Detalles del Empleado:\n" +
+                "ID: " + employee.id + "\n" +
+                "Apellidos: " + employee.lastName + "\n" +
+                "Nombres: " + employee.firstName + "\n" +
+                "Departamento: " + employee.department + "\n" +
+                "Municipio: " + employee.town + "\n" +
+                "Fecha de Nacimiento: " + employee.birthday + "\n" +
+                "Salario: " + employee.salary);
+        } else {
+            alert("Empleado no encontrado. Intente con otro ID.");
+        }
+    }
+</script>
+</body>
+
+</html>
